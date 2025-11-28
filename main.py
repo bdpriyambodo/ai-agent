@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from config import system_prompt
 
 def main(user_prompt=None, flag_prompt=None): 
     load_dotenv()
@@ -14,7 +15,8 @@ def main(user_prompt=None, flag_prompt=None):
     types.Content(role="user", parts=[types.Part(text=user_prompt)]),]
 
     response = client.models.generate_content(
-    model='gemini-2.0-flash-001', contents=messages
+        model='gemini-2.0-flash-001', contents=messages,
+        config= types.GenerateContentConfig(system_instruction=system_prompt)
     )
 
     print(response.text)
