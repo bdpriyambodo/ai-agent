@@ -4,7 +4,11 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from config import system_prompt
-from call_function import schema_get_files_info, available_functions
+from call_function import (
+    schema_get_files_info, 
+    available_functions,
+    call_function
+)
 
 def main(user_prompt=None, flag_prompt=None): 
     load_dotenv()
@@ -22,17 +26,34 @@ def main(user_prompt=None, flag_prompt=None):
 
     # print(response.text)
 
+    temp_list = []
+
     if response.function_calls is None:
         print(response.text)
     else:
         for i in response.function_calls:
-            print(f"Calling function: {i.name}({i.args})")
-            # print(i)
+            # print(f"Calling function: {i.name}({i.args})")
+
+            function_call_result = call_function(
+                i.name,
+                **i.args
+                  )
+
+            if function_call_result.parts[0].function_response.response is None:
+                raise Exception('No response')
+            else:
+                temp_list.append(function_call_result.parts[0])
+
+            # if function_call_result.parts[0].function_response.response:
+            #     temp_list.append(function_call_result.parts[0])
+            # else:
+            #     raise Exception('No response')
 
     if flag_prompt == '--verbose':
         print(f"User prompt: {user_prompt}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count }")
+        print(f"-> {function_call_result.parts[0].function_response.response}")   
 
  
 if len(sys.argv) < 2:

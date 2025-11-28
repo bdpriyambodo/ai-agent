@@ -1,5 +1,12 @@
 from google.genai import types
 from config import MAX_CHARS
+import subprocess
+import os
+
+from functions.get_files_info import get_files_info
+from functions.get_file_content import get_file_content
+from functions.write_file import write_file
+from functions.run_python_file import run_python_file
 
 schema_get_files_info = types.FunctionDeclaration(
     name="get_files_info",
@@ -81,3 +88,45 @@ available_functions = types.Tool(
         schema_write_file
     ]
 )
+
+def call_function(function_call_part_name, verbose=False, **kwargs):
+
+    working_directory = 'calculator'
+
+    if verbose:
+        print(f"Calling function: {function_call_part_name}({kwargs})")
+    else:
+        print(f" - Calling function: {function_call_part_name}")
+
+    print(kwargs)
+
+    try: 
+        func_map = {
+            "write_file": write_file,
+            "get_files_info" : get_files_info,
+            "get_file_content" : get_file_content,
+            "run_python_file" : run_python_file
+            }
+        
+        if function_call_part_name in func_map:
+            result = func_map[function_call_part_name](working_directory,**kwargs)
+            return types.Content(
+                role="tool",
+                parts=[
+                    types.Part.from_function_response(
+                        name=function_call_part_name,
+                        response={"result": result},
+                    )
+                ],
+            )
+    except NameError as e:
+        return types.Content(
+            role="tool",
+            parts=[
+                types.Part.from_function_response(
+                    name=function_call_part_name,
+                    response={"error": f"Unknown function: {function_call_part_name}"},
+                )
+            ],
+        )
+    
