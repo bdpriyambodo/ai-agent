@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from config import system_prompt
-from functions.get_files_info import schema_get_files_info, available_functions
+from call_function import schema_get_files_info, available_functions
 
 def main(user_prompt=None, flag_prompt=None): 
     load_dotenv()
