@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from config import system_prompt
+from functions.get_files_info import schema_get_files_info, available_functions
 
 def main(user_prompt=None, flag_prompt=None): 
     load_dotenv()
@@ -16,17 +17,24 @@ def main(user_prompt=None, flag_prompt=None):
 
     response = client.models.generate_content(
         model='gemini-2.0-flash-001', contents=messages,
-        config= types.GenerateContentConfig(system_instruction=system_prompt)
+        config= types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt)
     )
 
-    print(response.text)
+    # print(response.text)
+
+    if response.function_calls is None:
+        print(response.text)
+    else:
+        for i in response.function_calls:
+            print(f"Calling function: {i.name}({i.args})")
+            # print(i)
 
     if flag_prompt == '--verbose':
         print(f"User prompt: {user_prompt}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count }")
 
-
+ 
 if len(sys.argv) < 2:
     print("Usage: python3 main.py 'prompt'")
     sys.exit(1)
